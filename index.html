@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop product</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script type="text/tailwindcss">
+        /** @type {import('tailwindcss').Config} */
+        module.exports = {
+        content: ["./src/**/*.{html,js}"],
+        theme: {
+            extend: {},
+        },
+        plugins: [],
+        }
+    </script>
+
+    <style>
+        /* #product-content{
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        } */
+
+        /* .border {
+            border: 1px solid gray;
+            padding: 10px;
+        } */
+    </style>
+
+</head>
+<body class="mt-10">
+    <div class="flex justify-center">
+        <input type="text" placeholder="Search product" class="text-xl border-2 border-gray-400 rounded-full px-8 py-2 ">
+        <!-- <button id="search">search</button> -->
+    </div>
+
+    <div id="product-content" class="container mx-auto mt-10"></div>
+
+
+    <!-- Start here js script code -->
+    <script>
+        
+        // API data or data model specific
+        const apiUrl = 'https://utso.wiremockapi.cloud/v2';
+        const productData = fetch(apiUrl)
+            .then(res => res.json())
+            .catch(err => console.error(err));
+
+        // console.log(productData)
+
+        const searchProduct = document.querySelector('input[type="text"]');
+        const productContent = document.querySelector('#product-content');
+
+        const productContentFunc = (productSortNumber = "") => {
+            productContent.innerHTML = null;
+
+            const insideProductContent = document.createElement('div');
+            insideProductContent.classList = "flex flex-wrap gap-8 justify-center mb-10"
+
+            productData
+                .then(insideProductContent.innerHTML = 
+                    `<div class="h-[600px] flex items-center">
+                        <svg class="animate-spin h-12 w-12 mr-5" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" fill="none" class="hds-flight-icon--animation-loading"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g fill="#4d67ea" fill-rule="evenodd" clip-rule="evenodd"> <path d="M8 1.5a6.5 6.5 0 100 13 6.5 6.5 0 000-13zM0 8a8 8 0 1116 0A8 8 0 010 8z" opacity=".2"></path> <path d="M7.25.75A.75.75 0 018 0a8 8 0 018 8 .75.75 0 01-1.5 0A6.5 6.5 0 008 1.5a.75.75 0 01-.75-.75z"></path> </g> </g></svg>
+                        <span class="inline text-3xl text-slate-500">Loading product ...</span>
+                    </div>`
+                )
+                .then(data => {
+                    
+                    data
+                    .filter(product => product.model.toLowerCase().includes(productSortNumber.toLowerCase()))
+                    .filter(product => product.brand.toLowerCase().includes(""))
+                    .filter(product => product.price >= parseInt(0))
+                    .sort((firstItem, secondItem) => firstItem.price - secondItem.price)
+                    .isEmpty(bool => {
+
+                        bool
+                        ? insideProductContent.innerHTML = 
+                            `<div class="h-[600px] flex items-center text-3xl mt-10">
+                                <p class="text-orange-500">This product is not available!</p>
+                            </div>` 
+                        : insideProductContent.innerHTML = null;
+                    })
+                    .forEach(product => {
+
+                        insideProductContent.innerHTML += `
+                            <div class="cursor-pointer border-2 border-gray-300 hover:border-green-500 rounded-lg px-8 py-6 basis-80 flex-grow">
+                                <h1 class="text-2xl font-semibold">${product.model}</h1>
+                                <h2 class="text-xl font-semibold text-slate-500">${product.brand}</h2>
+                                <div class="border-2 rounded-lg w-full h-52 my-4">
+                                <img class="w-full h-full" src="${product.image}" alt="Laptop Image">
+                                </div>
+                                
+                                <div class="text-lg font-semibold">
+                                    Description :
+                                    <p class="text-[16px] font-normal">${product.description}</p>
+                                </div>
+                                <div class="mt-4 ">
+                                    <h3 class="text-lg font-semibold">Additional features :</h3>
+                                    <div>
+                                        <p>Display size : ${product.display_size}</p>
+                                        <p>Display resolution : ${product.resolution}</p>
+                                        <p>Processor : ${product.processor}</p>
+                                        <p>RAM : ${product.ram}</p>
+                                        <p>Storage : ${product.storage}</p>
+                                        <p>Graphics card : ${product.graphics_card}</p>
+                                        <p>Weight : ${product.weight}</p>
+                                        <p>Colors : ${
+                                            (() => {
+                                                let colorContainer = null;
+                                                product.colors.forEach((colorName, index) => {
+                                                    colorContainer += `
+                                                        <a href="#">${colorName}</a>${
+                                                            product.colors.length > 1 
+                                                            ? (product.colors.length - 1 === index ? '' : ',' ) : ''
+                                                        }
+                                                    `;
+                                                })
+                                                return colorContainer;
+                                            })()
+                                        }</p>
+                                        <p>Ratings : average: ${product.ratings.average}, count: ${product.ratings.count}</p>
+                                        <p>Release year : ${product.release_year}</p>
+                                    </div>
+                                </div>
+                                <p class="text-2xl font-semibold mt-4">Price : ${product.price} USD</p>
+                            </div>
+                        `
+                    })
+                });
+
+            productContent.appendChild(insideProductContent);
+        };
+        productContentFunc(); //call all products
+        
+        // search product function
+        searchProduct.addEventListener('input', (event) => {
+            productContentFunc(event.target.value);
+        })
+
+        // create custom method of array for use checking empty array
+        Array.prototype.isEmpty = function(callback) {
+            if (Array.isArray(this) && this.length === 0) {
+                callback(true, this);
+            } 
+            else {
+                callback(false, this);
+                return this;
+            }
+        }
+
+    </script>
+</body>
+</html>
